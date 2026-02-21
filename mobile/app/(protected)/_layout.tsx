@@ -1,73 +1,88 @@
 import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { Redirect, Tabs } from 'expo-router';
+import { View, Text, Pressable } from 'react-native';
+import { Slot, usePathname, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { hapticSelection } from '../../lib/haptics';
 
+const tabs = [
+  { name: 'home', title: 'Play', iconDefault: 'help-circle-outline' as const, iconActive: 'help-circle' as const, href: '/(protected)/home' },
+  { name: 'explore', title: 'Explore', iconDefault: 'compass-outline' as const, iconActive: 'compass' as const, href: '/(protected)/explore' },
+  { name: 'history', title: 'History', iconDefault: 'time-outline' as const, iconActive: 'time' as const, href: '/(protected)/history' },
+  { name: 'settings', title: 'Settings', iconDefault: 'settings-outline' as const, iconActive: 'settings' as const, href: '/(protected)/settings' },
+];
+
 export default function ProtectedLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isGuest, isLoading } = useAuth();
+  const pathname = usePathname();
+  const insets = useSafeAreaInsets();
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: '#0A0A12' }}>
+        <View className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: '#FF6B9D' }}>
+          <Ionicons name="help-circle" size={24} color="white" />
+        </View>
       </View>
     );
   }
 
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/login" />;
+  if (!isAuthenticated && !isGuest) {
+    return null;
   }
 
+  // Check if we're on a screen that shouldn't show tabs (explore, paywall)
+  const isSubScreen = pathname.includes('paywall') || pathname.includes('gameplay') || pathname.includes('round-summary');
+
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#ea580c',
-        tabBarInactiveTintColor: '#9ca3af',
-        tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopColor: '#fff7ed',
-        },
-      }}
-      screenListeners={{
-        tabPress: () => hapticSelection(),
-      }}
-    >
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: 'Play',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="help-circle-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: 'History',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="paywall"
-        options={{
-          href: null,
-        }}
-      />
-    </Tabs>
+    <View className="flex-1" style={{ backgroundColor: '#0A0A12' }}>
+      <View className="flex-1">
+        <Slot />
+      </View>
+
+      {/* Custom Tab Bar - hidden on sub-screens */}
+      {!isSubScreen && (
+        <View
+          className="flex-row"
+          style={{
+            paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+            backgroundColor: '#0A0A12',
+            borderTopWidth: 1,
+            borderTopColor: '#1A1A2E',
+          }}
+        >
+          {tabs.map((tab) => {
+            const isActive = pathname.includes(tab.name);
+            return (
+              <Pressable
+                key={tab.name}
+                className="flex-1 items-center pt-3"
+                onPress={() => {
+                  hapticSelection();
+                  router.push(tab.href as any);
+                }}
+              >
+                {/* Active indicator */}
+                {isActive && (
+                  <View className="absolute -top-0.5 h-1 w-12 rounded-full" style={{ backgroundColor: '#FF6B9D' }} />
+                )}
+                <Ionicons
+                  name={isActive ? tab.iconActive : tab.iconDefault}
+                  size={24}
+                  color={isActive ? '#FF6B9D' : '#6B6B8A'}
+                />
+                <Text
+                  className="mt-1 text-xs font-medium"
+                  style={{ color: isActive ? '#FF6B9D' : '#6B6B8A' }}
+                >
+                  {tab.title}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+    </View>
   );
 }

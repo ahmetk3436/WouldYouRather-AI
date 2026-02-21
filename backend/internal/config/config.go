@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 	"time"
 )
@@ -18,9 +19,14 @@ type Config struct {
 	JWTRefreshExpiry time.Duration
 
 	RevenueCatWebhookAuth string
+	AppleBundleID         string
 
 	Port        string
 	CORSOrigins string
+
+	GLMApiURL string
+	GLMApiKey string
+	GLMModel  string
 }
 
 func Load() *Config {
@@ -37,10 +43,22 @@ func Load() *Config {
 		JWTRefreshExpiry: parseDuration(getEnv("JWT_REFRESH_EXPIRY", "168h")),
 
 		RevenueCatWebhookAuth: getEnv("REVENUECAT_WEBHOOK_AUTH", ""),
+		AppleBundleID:         getEnv("APPLE_BUNDLE_ID", ""),
 
 		Port:        getEnv("PORT", "8080"),
 		CORSOrigins: getEnv("CORS_ORIGINS", "*"),
+
+		GLMApiURL: getEnv("GLM_API_URL", "https://api.z.ai/api/paas/v4/chat/completions"),
+		GLMApiKey: getEnv("GLM_API_KEY", ""),
+		GLMModel:  getEnv("GLM_MODEL", "glm-5"),
 	}
+}
+
+func (c *Config) Validate() error {
+	if c.GLMApiKey == "" {
+		log.Println("WARNING: GLM_API_KEY not set, AI generation disabled")
+	}
+	return nil
 }
 
 func (c *Config) DSN() string {

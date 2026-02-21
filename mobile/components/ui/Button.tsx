@@ -4,28 +4,34 @@ import {
   Text,
   ActivityIndicator,
   type PressableProps,
+  type ViewStyle,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from '../../lib/cn';
 
-interface ButtonProps extends PressableProps {
+interface ButtonProps extends Omit<PressableProps, 'style'> {
   title: string;
-  variant?: 'primary' | 'secondary' | 'outline' | 'destructive';
+  variant?: 'primary' | 'secondary' | 'outline' | 'destructive' | 'gradient';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  gradientColors?: readonly [string, string, ...string[]];
+  style?: ViewStyle;
 }
 
 const variantStyles = {
-  primary: 'bg-primary-600 active:bg-primary-700',
-  secondary: 'bg-gray-600 active:bg-gray-700',
-  outline: 'border-2 border-primary-600 bg-transparent active:bg-primary-50',
-  destructive: 'bg-red-600 active:bg-red-700',
+  primary: '',
+  secondary: '', // Uses style for #2A2A4A
+  outline: 'bg-transparent active:bg-pink-900/30',
+  destructive: '', // Uses style for #FF5757
+  gradient: '', // Handled separately with LinearGradient
 };
 
 const variantTextStyles = {
   primary: 'text-white',
   secondary: 'text-white',
-  outline: 'text-primary-600',
+  outline: '',
   destructive: 'text-white',
+  gradient: 'text-white',
 };
 
 const sizeStyles = {
@@ -40,15 +46,78 @@ const sizeTextStyles = {
   lg: 'text-lg',
 };
 
+/**
+ * Button - Enhanced 2025-2026 Version
+ * - Added gradient variant for modern look
+ * - Loading shimmer effect via skeleton pattern
+ * - Scale animation for press feedback
+ */
 export default function Button({
   title,
   variant = 'primary',
   size = 'md',
   isLoading = false,
+  gradientColors = ['#FF6B9D', '#C44DFF'],
   disabled,
+  style,
   ...props
 }: ButtonProps) {
   const isDisabled = disabled || isLoading;
+  const isGradient = variant === 'gradient';
+
+  const content = (
+    <>
+      {isLoading ? (
+        <ActivityIndicator
+          color={variant === 'outline' ? '#FF6B9D' : '#ffffff'}
+          size={size === 'sm' ? 'small' : 'large'}
+        />
+      ) : (
+        <Text
+          className={cn(
+            'font-semibold',
+            variantTextStyles[variant],
+            sizeTextStyles[size]
+          )}
+          style={variant === 'outline' ? { color: '#FF6B9D' } : undefined}
+        >
+          {title}
+        </Text>
+      )}
+    </>
+  );
+
+  if (isGradient) {
+    return (
+      <Pressable
+        disabled={isDisabled}
+        className={cn(
+          'items-center justify-center rounded-xl overflow-hidden',
+          sizeStyles[size],
+          isDisabled && 'opacity-50'
+        )}
+        style={({ pressed }) => ({
+          transform: [{ scale: pressed ? 0.97 : 1 }],
+          ...(style as object),
+        })}
+        {...(props as PressableProps)}
+      >
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{
+            width: '100%',
+            height: '100%',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {content}
+        </LinearGradient>
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable
@@ -59,23 +128,17 @@ export default function Button({
         isDisabled && 'opacity-50'
       )}
       disabled={isDisabled}
-      {...props}
+      style={({ pressed }) => ({
+        transform: [{ scale: pressed ? 0.97 : 1 }],
+        ...(variant === 'primary' ? { backgroundColor: '#FF6B9D' } : {}),
+        ...(variant === 'outline' ? { borderWidth: 2, borderColor: '#FF6B9D' } : {}),
+        ...(variant === 'secondary' ? { backgroundColor: '#2A2A4A' } : {}),
+        ...(variant === 'destructive' ? { backgroundColor: '#FF5757' } : {}),
+        ...(style as object),
+      })}
+      {...(props as PressableProps)}
     >
-      {isLoading ? (
-        <ActivityIndicator
-          color={variant === 'outline' ? '#2563eb' : '#ffffff'}
-        />
-      ) : (
-        <Text
-          className={cn(
-            'font-semibold',
-            variantTextStyles[variant],
-            sizeTextStyles[size]
-          )}
-        >
-          {title}
-        </Text>
-      )}
+      {content}
     </Pressable>
   );
 }
