@@ -1,31 +1,29 @@
 {
   "expo": {
-    "name": "WouldYou",
+    "name": "WouldYouRather-AI",
     "slug": "wouldyou",
     "version": "1.0.0",
+    "owner": "ahmetcoskunkizilkaya",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "scheme": "wouldyou",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#6366f1"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ahmetcoskun.wouldyou",
+      "buildNumber": "1"
     },
     "android": {
+      "package": "com.ahmetcoskun.wouldyou",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      }
     },
     "plugins": [
       "expo-router",
